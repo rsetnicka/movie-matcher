@@ -1,3 +1,4 @@
+import type { Genre } from "@/types/global";
 import clsx from "clsx";
 import React from "react";
 
@@ -6,10 +7,8 @@ type GenresCardProps = {
   onNext?: () => void;
   isPending: boolean;
   isError: boolean;
-  data: {
-    id: number;
-    name: string;
-  }[];
+  preference: "liked" | "disliked" | null;
+  data: Genre[];
 };
 
 const GenresCard = ({
@@ -17,23 +16,18 @@ const GenresCard = ({
   isError,
   data,
   type,
+  preference,
   onNext,
 }: GenresCardProps) => {
-  const [genresData, setGenresData] = React.useState(
-    data && data.length > 0
-      ? data?.map((genre) => ({ ...genre, selected: false }))
-      : [],
-  );
-
+  const [genresData, setGenresData] = React.useState(data ?? []);
+  console.log("GenresCard data:", genresData);
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading genres</div>;
 
   function handleClick(id: number) {
     console.log("Clicked genre ID:", id);
     setGenresData((prev) =>
-      prev.map((genre) =>
-        genre.id === id ? { ...genre, selected: !genre.selected } : genre,
-      ),
+      prev.map((genre) => (genre.id === id ? { ...genre, preference } : genre)),
     );
   }
 
@@ -54,7 +48,11 @@ const GenresCard = ({
               className={clsx(
                 "mx-2 my-1 cursor-pointer rounded-xl p-2 text-center",
                 "hover:bg-gray-700", // default styles
-                genre.selected ? "bg-gray-600" : "bg-gray-800", // override when selected
+                {
+                  "bg-green-700": genre.preference === "liked",
+                  "bg-red-700": genre.preference === "disliked",
+                  "bg-gray-800": !genre.preference,
+                },
               )}
               key={genre.id}
               onClick={() => handleClick(genre.id)}

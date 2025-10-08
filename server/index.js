@@ -19,6 +19,7 @@ app.get("/api/movies", async (req, res) => {
     );
     res.json(data.results);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 
@@ -135,7 +136,10 @@ async function queryTMDB(endpoint, query) {
       },
     }
   );
-  if (!response.ok) throw new Error("Network response was not ok");
+  if (!response.ok) {
+    console.log(await response.text());
+    throw new Error("Network response was not ok");
+  }
 
   return await response.json();
 }

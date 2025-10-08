@@ -1,3 +1,6 @@
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import type { Genre } from "@/types/global";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import React from "react";
@@ -11,10 +14,14 @@ export const Route = createFileRoute("/matcher")({
 
 function RouteComponent() {
   const [step, setStep] = React.useState(1);
+  const [yearRange, setYearRange] = React.useState<[number, number]>([
+    1990, 2025,
+  ]);
+
   const { isPending, isError, data } = useQuery({
     queryKey: ["matcherData"],
     queryFn: () => fetchMovie(157336), // Example movie ID // Interstellar 157336 Matrix 603
-    enabled: step > 5,
+    enabled: step >= 4,
   });
 
   const {
@@ -23,7 +30,15 @@ function RouteComponent() {
     data: genresData,
   } = useQuery({
     queryKey: ["genresData"],
-    queryFn: fetchGenres,
+    queryFn: async () => {
+      const data = await fetchGenres();
+      console.log("Fetched genres data:", data);
+      const modifiedData = data.map((row: Genre) => ({
+        ...row,
+        preference: null,
+      }));
+      return modifiedData;
+    },
   });
 
   function nextStep() {
@@ -38,6 +53,7 @@ function RouteComponent() {
           onNext={nextStep}
           isPending={genresIsPending}
           isError={genresIsError}
+          preference={"liked"}
           data={genresData}
         />
       )}
@@ -47,10 +63,33 @@ function RouteComponent() {
           onNext={nextStep}
           isPending={genresIsPending}
           isError={genresIsError}
+          preference={"disliked"}
           data={genresData}
         />
       )}
-      {step > 5 && (
+      {step === 3 && (
+        <div className="flex flex-shrink flex-grow flex-col items-center justify-center">
+          <Label className="text-lg">
+            Year: {yearRange[0]} – {yearRange[1]}
+          </Label>
+          <Slider
+            value={yearRange}
+            onValueChange={(value) => setYearRange([value[0], value[1]])}
+            min={1940}
+            max={2025}
+            step={1}
+            className="w-64 py-4"
+          />
+          <button
+            className="cursor-pointer rounded-xl border bg-green-800 px-4 py-2 hover:bg-green-700"
+            onClick={nextStep}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {step >= 4 && (
         <MovieCard data={data} isPending={isPending} isError={isError} />
       )}
     </>
